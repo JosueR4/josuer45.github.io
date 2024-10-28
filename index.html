@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jump Volei</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="menu">
+        <h1>Jump Volei</h1>
+        <button onclick="showCharacterSelect()">Seleccionar Personaje</button>
+        <button onclick="startGame()">Iniciar Juego</button>
+    </div>
+
+    <div id="characterSelect" class="hidden">
+        <h2>Selecciona tu Personaje</h2>
+        <div class="character-grid">
+            <div class="character-card" onclick="selectCharacter('personaje1.2')" id="char1">
+                <img src="personaje1.2.png" alt="Personaje 1">
+                <p>Personaje 1</p>
+                <span class="locked">Desbloqueado</span>
+            </div>
+            <div class="character-card locked" onclick="selectCharacter('personaje2')" id="char2">
+                <img src="personaje2.png" alt="Personaje 2">
+                <p>Personaje 2</p>
+                <span class="locked">Bloqueado (40 pts)</span>
+            </div>
+            <div class="character-card locked" onclick="selectCharacter('personaje3')" id="char3">
+                <img src="personaje3.png" alt="Personaje 3">
+                <p>Personaje 3</p>
+                <span class="locked">Bloqueado (60 pts)</span>
+            </div>
+            <div class="character-card locked" onclick="selectCharacter('personaje4')" id="char4">
+                <img src="personaje4.png" alt="Personaje 4">
+                <p>Personaje 4</p>
+                <span class="locked">Bloqueado (100 pts)</span>
+            </div>
+        </div>
+        <button onclick="confirmSelection()">Seleccionar</button>
+    <button onclick="goToMenu()">Salir</button>
+    </div>
+    
+    <div id="gameContainer" class="hidden">
+        <canvas id="gameCanvas"></canvas>
+        <div id="score">Puntuación: 0</div>
+        <div id="countdown" class="hidden">3</div>
+    </div>
+
+    <div id="gameOver" class="hidden">
+        <h2>Game Over</h2>
+        <p>Puntuación final: <span id="finalScore">0</span></p>
+        <button onclick="retryGame()">Reintentar</button>
+        <button onclick="goToMenu()">Salir al Menú</button>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
