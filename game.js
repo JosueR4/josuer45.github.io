@@ -52,38 +52,32 @@ function showCharacterSelect() {
     document.getElementById('characterSelect').classList.remove('hidden');
 }
 
-// Modificar la función endGame para actualizar highestScore
-function endGame() {
-    gameRunning = false;
-    if (score > highestScore) {
-        highestScore = score;
-        localStorage.setItem('highestScore', highestScore);
-        updateCharacterAvailability();
-    }
-    document.getElementById("gameContainer").classList.add("hidden");
-    document.getElementById("gameOver").classList.remove("hidden");
-    document.getElementById("finalScore").textContent = score;
-}
-
 // Función para confirmar la selección del personaje
 function confirmSelection() {
     if (highestScore >= characterUnlocks[selectedCharacter]) {
-        alert(`Has seleccionado a ${selectedCharacter}!`);
-        // Aquí puedes realizar otras acciones, como iniciar el juego
+        // Ocultar la pantalla de selección de personaje
+        document.getElementById("characterSelect").classList.add("hidden");
+        // Iniciar el juego directamente
+        startGame();
     } else {
         alert('Este personaje está bloqueado.');
     }
 }
 
-// Modificar la función goToMenu
+// Modificar la función goToMenu para manejar correctamente el regreso al menú
 function goToMenu() {
+    // Ocultar todas las pantallas primero
     document.getElementById("gameOver").classList.add("hidden");
     document.getElementById("characterSelect").classList.add("hidden");
+    document.getElementById("gameContainer").classList.add("hidden");
+    
+    // Mostrar solo el menú principal
     document.getElementById("menu").classList.remove("hidden");
+    
+    // Reiniciar variables relevantes
+    gameRunning = false;
+    score = 0;
 }
-
-// Cargar puntuación máxima al iniciar
-window.addEventListener('load', loadHighScore);
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
