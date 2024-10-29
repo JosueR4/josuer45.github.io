@@ -553,28 +553,31 @@ canvas.addEventListener("touchstart", (e) => {
 
 canvas.addEventListener("touchmove", (e) => {
     if (!isDragging) return;
-
     touchCurrentX = e.touches[0].clientX;
     const diffX = touchCurrentX - touchStartX;
-
-    if (diffX > 10) isMovingRight = true;
-    else if (diffX < -10) isMovingLeft = true;
-    else {
+    // Utilizar 'transform' para movimiento suave
+    if (diffX > 10) {
+        canvas.style.transform = `translateX(${diffX}px)`;
+        isMovingRight = true;
+    } else if (diffX < -10) {
+        canvas.style.transform = `translateX(${diffX}px)`;
+        isMovingLeft = true;
+    } else {
         isMovingRight = false;
         isMovingLeft = false;
     }
-
-    touchStartX = touchCurrentX; // Update start position for continuous smooth movement
 });
 
 canvas.addEventListener("touchend", () => {
     isDragging = false;
     isMovingRight = false;
     isMovingLeft = false;
+    // Suavizar el retorno a la posición original
+    canvas.style.transition = "transform 0.3s ease-out";
+    canvas.style.transform = "translateX(0px)";
 });
 
 window.addEventListener('resize', resizeCanvas);
-
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false });
