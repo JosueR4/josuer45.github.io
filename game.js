@@ -540,38 +540,42 @@ document.addEventListener("keyup", (e) => {
     if (e.code === "ArrowLeft") isMovingLeft = false;
 });
 
-//Manejo de control táctil
+// Variables para el control táctil
+let isTouching = false;
+let touchX = 0;
 
-let touchStartX = 0;
-let touchStartY = 0;
-
+// Manejo de controles táctiles
 canvas.addEventListener("touchstart", (e) => {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
+    // Tomar la posición inicial del toque y comenzar el seguimiento
+    touchX = e.touches[0].clientX;
+    isTouching = true;
 });
 
 canvas.addEventListener("touchmove", (e) => {
-    const touchX = e.touches[0].clientX;
-    const touchY = e.touches[0].clientY;
-    const diffX = touchX - touchStartX;
-    const diffY = touchY - touchStartY;
-
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX > 10) isMovingRight = true;
-        else if (diffX < -10) isMovingLeft = true;
+    if (isTouching) {
+        // Actualizar la posición del personaje en base a la posición del toque
+        const newTouchX = e.touches[0].clientX;
+        
+        // Calcular el movimiento como la diferencia entre el toque actual e inicial
+        const deltaX = newTouchX - touchX;
+        
+        // Actualizar la posición del jugador directamente
+        player.x += deltaX;
+        
+        // Limitar el movimiento del jugador dentro de los bordes de la pantalla
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        
+        // Actualizar la posición inicial para la siguiente iteración
+        touchX = newTouchX;
     }
-
-    touchStartX = touchX;
-    touchStartY = touchY;
 });
 
 canvas.addEventListener("touchend", () => {
-    isMovingRight = false;
-    isMovingLeft = false;
+    // Dejar de mover el personaje cuando se retira el toque
+    isTouching = false;
 });
 
-window.addEventListener('resize', resizeCanvas);
-
+// Evitar el scroll en dispositivos móviles
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false });
