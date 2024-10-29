@@ -546,36 +546,23 @@ let touchX = 0;
 
 // Manejo de controles táctiles
 canvas.addEventListener("touchstart", (e) => {
-    // Tomar la posición inicial del toque y comenzar el seguimiento
-    touchX = e.touches[0].clientX;
-    isTouching = true;
+    touchStartX = e.touches[0].clientX;
 });
 
 canvas.addEventListener("touchmove", (e) => {
-    if (isTouching) {
-        // Actualizar la posición del personaje en base a la posición del toque
-        const newTouchX = e.touches[0].clientX;
-        
-        // Calcular el movimiento como la diferencia entre el toque actual e inicial
-        const deltaX = newTouchX - touchX;
-        
-        // Actualizar la posición del jugador directamente
-        player.x += deltaX;
-        
-        // Limitar el movimiento del jugador dentro de los bordes de la pantalla
-        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-        
-        // Actualizar la posición inicial para la siguiente iteración
-        touchX = newTouchX;
-    }
+    const touchX = e.touches[0].clientX;
+    const diffX = touchX - touchStartX;
+    if (diffX > 10) isMovingRight = true;
+    else if (diffX < -10) isMovingLeft = true;
 });
 
 canvas.addEventListener("touchend", () => {
-    // Dejar de mover el personaje cuando se retira el toque
-    isTouching = false;
+    isMovingRight = false;
+    isMovingLeft = false;
 });
 
-// Evitar el scroll en dispositivos móviles
+window.addEventListener('resize', resizeCanvas);
+
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false });
