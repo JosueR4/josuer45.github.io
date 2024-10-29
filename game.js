@@ -138,9 +138,9 @@ const player = {
     height: 40,
     dx: 6,
     dy: 0,
-    gravity: 0.2, // Reducir gravedad para un descenso más lento
-    jumpPower: -10, // Reducir el impulso del salto para un ascenso más natural
-    maxFallSpeed: 8, // Limitar la velocidad de caída
+    gravity: 0.4,
+    jumpPower: -15,
+    maxFallSpeed: 12,
     img: new Image(),
     isJumping: false,
     isInvulnerable: false,
@@ -307,22 +307,23 @@ function updateEnemies() {
 }
 
 function movePlayer() {
-    // Movimiento en el eje Y, afectado por gravedad
-    player.dy += player.gravity;
-    player.dy = Math.min(player.dy, player.maxFallSpeed);
-    player.y += player.dy;
-
-    // Asegura que el jugador se mantenga dentro de los límites de la pantalla
-    if (player.x < 0) {
-        player.x = 0;
-    } else if (player.x + player.width > canvas.width) {
-        player.x = canvas.width - player.width;
+    if (isMovingRight) {
+        player.x += player.dx;
+        if (player.x > canvas.width) {
+            player.x = 0;
+        }
     }
-
-    // Aplica gravedad y velocidad en Y
-    player.dy += player.gravity;
-    player.dy = Math.min(player.dy, player.maxFallSpeed);
+    if (isMovingLeft) {
+        player.x -= player.dx;
+        if (player.x + player.width < 0) {
+            player.x = canvas.width;
+        }
+    }
     player.y += player.dy;
+    player.dy += player.gravity;
+    if (player.dy > player.maxFallSpeed) {
+        player.dy = player.maxFallSpeed;
+    }
 
     // Colisión con plataformas
     platforms.forEach(plat => {
@@ -449,14 +450,12 @@ function drawGame() {
 
 function gameLoop() {
     if (!gameRunning) return;
-
     movePlayer();
     updatePlatforms();
     updateEnemies();
     updateHeart();
     checkEnemyCollision();
     drawGame();
-
     requestAnimationFrame(gameLoop);
 }
 
@@ -541,73 +540,31 @@ document.addEventListener("keyup", (e) => {
     if (e.code === "ArrowLeft") isMovingLeft = false;
 });
 
-// Variable para almacenar la posición del toque
-let touchActive = false;
-
 // Manejo de controles táctiles
-canvas.addEventListener('touchstart', (e) => {
-    const touchX = e.touches[0].clientX;
-    player.x = touchX - player.width / 2; // Centrar el personaje en el punto de toque
-}, { passive: true });
-
-canvas.addEventListener('touchmove', (e) => {
-    const touchX = e.touches[0].clientX;
-    player.x = touchX - player.width / 2; // Centrar el personaje en el punto de toque
-    e.preventDefault(); // Evita el desplazamiento de la pantalla mientras el jugador se mueve
-}, { passive: false });
-
-canvas.addEventListener('touchend', () => {
-    touchActive = false;
-    isMovingLeft = false;
-    isMovingRight = false;
+canvas.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
 });
 
-// Función para actualizar la posición del jugador en función del toque
-function updateTouchPosition(touchX) {
-    
-    // Calcula la posición del toque en relación con el jugador
-    const playerCenterX = player.x + player.width / 2;
-    const touchThreshold = 5; // Permite un umbral de 5px para evitar movimientos bruscos
+canvas.addEventListener("touchmove", (e) => {
+    const touchX = e.touches[0].clientX;
+    const diffX = touchX - touchStartX;
 
-    // Verifica si el toque está a la derecha o izquierda del jugador
-    if (touchX > playerCenterX + touchThreshold) {
-        isMovingRight = true;
-        isMovingLeft = false;
-    } else if (touchX < playerCenterX - touchThreshold) {
-        isMovingLeft = true;
-        isMovingRight = false;
-    } else {
-        // Si está dentro del umbral, detén el movimiento para mayor control
-        isMovingLeft = false;
-        isMovingRight = false;
-    }
-}
+    if (diffX > 10) isMovingRight = true;
+    else if (diffX < -10) isMovingLeft = true;
+});
+
+canvas.addEventListener("touchend", () => {
+    isMovingRight = false;
+    isMovingLeft = false;
+});
+
+canvas.addEventListener('touchend', () => {
+    isMovingRight = false;
+    isMovingLeft = false;
+});
 
 window.addEventListener('resize', resizeCanvas);
 
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false }); 
-
-// Variable para indicar si el mouse está presionado
-let isMousePressed = false;
-
-// Evento para cuando se presiona el botón del mouse
-canvas.addEventListener('mousedown', (e) => {
-    isMousePressed = true;
-    const mouseX = e.clientX;
-    player.x = mouseX - player.width / 2; // Centrar el personaje en el punto de clic
-});
-
-// Evento para cuando se mueve el mouse con el botón presionado
-canvas.addEventListener('mousemove', (e) => {
-    if (isMousePressed) {
-        const mouseX = e.clientX;
-        player.x = mouseX - player.width / 2; // Centrar el personaje en el punto de movimiento
-    }
-});
-
-// Evento para cuando se suelta el botón del mouse
-canvas.addEventListener('mouseup', () => {
-    isMousePressed = false;
-});
