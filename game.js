@@ -21,12 +21,14 @@ function loadHighScore() {
 function updateCharacterAvailability() {
     for (const [char, requiredScore] of Object.entries(characterUnlocks)) {
         const charElement = document.getElementById(`char${char.slice(-1)}`);
-        if (highestScore >= requiredScore) {
-            charElement.classList.remove('locked');
-            charElement.querySelector('.locked').textContent = 'Desbloqueado';
-        } else {
-            charElement.classList.add('locked');
-            charElement.querySelector('.locked').textContent = `Bloqueado (${requiredScore} pts)`;
+        if (charElement) { // Verificar que el elemento exista
+            if (highestScore >= requiredScore) {
+                charElement.classList.remove('locked');
+                charElement.querySelector('.locked').textContent = 'Desbloqueado';
+            } else {
+                charElement.classList.add('locked');
+                charElement.querySelector('.locked').textContent = `Bloqueado (${requiredScore} pts)`;
+            }
         }
     }
 }
@@ -163,7 +165,7 @@ const enemy2 = {
     y: canvas.height / 2,
     width: 40,
     height: 40,
-    speed: 4,
+    speed: 3,
     direction: 1,
     active: true,
     img: new Image()
@@ -317,10 +319,11 @@ function movePlayer() {
             player.x = canvas.width;
         }
     }
-
-    player.dy += player.gravity;
-    player.dy = Math.min(player.dy, player.maxFallSpeed);
     player.y += player.dy;
+    player.dy += player.gravity;
+    if (player.dy > player.maxFallSpeed) {
+        player.dy = player.maxFallSpeed;
+    }
 
     // Colisión con plataformas
     platforms.forEach(plat => {
@@ -525,44 +528,35 @@ function retryGame() {
     startGame();
 }
 
-function goToMenu() {
-    document.getElementById("gameOver").classList.add("hidden");
-    document.getElementById("menu").classList.remove("hidden");
-}
-
-// Event Listeners
+// Manejo de controles de teclado
 document.addEventListener("keydown", (e) => {
-    if (e.code === "ArrowRight") {
-        isMovingRight = true;
-    } else if (e.code === "ArrowLeft") {
-        isMovingLeft = true;
-    }
+    if (e.code === "ArrowRight") isMovingRight = true;
+    if (e.code === "ArrowLeft") isMovingLeft = true;
+    if (e.code === "Space" && !gameRunning) startGame();
 });
 
 document.addEventListener("keyup", (e) => {
-    if (e.code === "ArrowRight") {
-        isMovingRight = false;
-    } else if (e.code === "ArrowLeft") {
-        isMovingLeft = false;
-    }
+    if (e.code === "ArrowRight") isMovingRight = false;
+    if (e.code === "ArrowLeft") isMovingLeft = false;
 });
 
-canvas.addEventListener('touchstart', (e) => {
+// Manejo de controles táctiles
+canvas.addEventListener("touchstart", (e) => {
     touchStartX = e.touches[0].clientX;
-}, { passive: true });
+});
 
-canvas.addEventListener('touchmove', (e) => {
+canvas.addEventListener("touchmove", (e) => {
     const touchX = e.touches[0].clientX;
-    const diff = touchX - touchStartX;
-    if (diff > 10) {
-        isMovingRight = true;
-        isMovingLeft = false;
-    } else if (diff < -10) {
-        isMovingLeft = true;
-        isMovingRight = false;
-    }
-    e.preventDefault();
-}, { passive: false });
+    const diffX = touchX - touchStartX;
+
+    if (diffX > 10) isMovingRight = true;
+    else if (diffX < -10) isMovingLeft = true;
+});
+
+canvas.addEventListener("touchend", () => {
+    isMovingRight = false;
+    isMovingLeft = false;
+});
 
 canvas.addEventListener('touchend', () => {
     isMovingRight = false;
