@@ -309,14 +309,18 @@ function updateEnemies() {
 function movePlayer() {
     if (isMovingRight && touchActive) {
         player.x += player.dx;
-        if (player.x > canvas.width) {
-            player.x = 0;
+        // Manejo del límite de pantalla con efecto de rebote suave
+        if (player.x > canvas.width - player.width) {
+            player.x = canvas.width - player.width;
+            player.dx *= -0.5;
         }
     }
     if (isMovingLeft && touchActive) {
         player.x -= player.dx;
-        if (player.x + player.width < 0) {
-            player.x = canvas.width;
+        // Manejo del límite de pantalla con efecto de rebote suave
+        if (player.x < 0) {
+            player.x = 0;
+            player.dx *= -0.5;
         }
     }
 
@@ -377,6 +381,9 @@ function movePlayer() {
         initialJump = false;
     }
 }
+
+// Inicialización
+const touchController = new TouchController(canvas, player);
 
 function checkEnemyCollision() {
     if (player.isInvulnerable) return;
@@ -540,43 +547,99 @@ document.addEventListener("keyup", (e) => {
     if (e.code === "ArrowLeft") isMovingLeft = false;
 });
 
-// Variable para almacenar la posición del toque
+// Variables para el control táctil
 let touchActive = false;
+let initialTouchX = 0;
+let currentTouchX = 0;
+const MOVEMENT_THRESHOLD = 20; // Pixels necesarios para iniciar movimiento
+const TOUCH_SENSITIVITY = 0.5; // Factor de sensibilidad del movimiento
 
-// Manejo de controles táctiles
-canvas.addEventListener('touchstart', (e) => {
-    touchActive = true;
-    updateTouchPosition(e.touches[0].clientX);
-}, { passive: true });
+// Clase para manejar el input táctil
+class TouchController {
+    constructor(canvas, player) {
+        this.canvas = canvas;
+        this.player = player;
+        this.touchStartTime = 0;
+        this.lastTouchX = 0;
+        this.velocity = 0;
+        this.setupEventListeners();
+    }
 
-canvas.addEventListener('touchmove', (e) => {
-    updateTouchPosition(e.touches[0].clientX);
-    e.preventDefault(); // Previene el desplazamiento de la pantalla
-}, { passive: false });
+    setupEventListeners() {
+        this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
+        this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+        this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: true });
+    }
 
-canvas.addEventListener('touchend', () => {
-    touchActive = false;
-    isMovingLeft = false;
-    isMovingRight = false;
-});
+    handleTouchStart(e) {
+        touchActive = true;
+        initialTouchX = e.touches[0].clientX;
+        currentTouchX = initialTouchX;
+        this.touchStartTime = Date.now();
+        this.lastTouchX = initialTouchX;
+        this.velocity = 0;
 
-// Función para actualizar la posición del jugador en función del toque
-function updateTouchPosition(touchX) {
-    // Calcula la posición del toque en relación con el jugador
-    const playerCenterX = player.x + player.width / 2;
-    const touchThreshold = 5; // Permite un umbral de 5px para evitar movimientos bruscos
+        // Previene doble toque para zoom
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }
 
-    // Verifica si el toque está a la derecha o izquierda del jugador
-    if (touchX > playerCenterX + touchThreshold) {
-        isMovingRight = true;
-        isMovingLeft = false;
-    } else if (touchX < playerCenterX - touchThreshold) {
-        isMovingLeft = true;
-        isMovingRight = false;
-    } else {
-        // Si está dentro del umbral, detén el movimiento para mayor control
-        isMovingLeft = false;
-        isMovingRight = false;
+    handleTouchMove(e) {
+        e.preventDefault();
+        if (!touchActive) return;
+
+        currentTouchX = e.touches[0].clientX;
+        const deltaX = currentTouchX - this.lastTouchX;
+        
+        // Calcula la velocidad basada en el movimiento del dedo
+        const timeElapsed = Date.now() - this.touchStartTime;
+        this.velocity = deltaX / timeElapsed * TOUCH_SENSITIVITY;
+
+        // Actualiza la posición del jugador con inercia
+        this.updatePlayerPosition(deltaX);
+        
+        this.lastTouchX = currentTouchX;
+    }
+
+    handleTouchEnd() {
+        touchActive = false;
+        // Aplica inercia gradual
+        this.applyInertia();
+    }
+
+    updatePlayerPosition(deltaX) {
+        const movement = Math.abs(deltaX);
+        if (movement > MOVEMENT_THRESHOLD) {
+            if (deltaX > 0) {
+                isMovingRight = true;
+                isMovingLeft = false;
+                this.player.dx = Math.min(this.player.maxSpeed, movement * TOUCH_SENSITIVITY);
+            } else {
+                isMovingLeft = true;
+                isMovingRight = false;
+                this.player.dx = Math.min(this.player.maxSpeed, movement * TOUCH_SENSITIVITY);
+            }
+        } else {
+            // Movimiento suave cuando el movimiento es pequeño
+            this.player.dx *= 0.8;
+        }
+    }
+
+    applyInertia() {
+        const inertiaDecay = 0.95;
+        const animate = () => {
+            if (Math.abs(this.velocity) > 0.1) {
+                this.velocity *= inertiaDecay;
+                this.player.x += this.velocity;
+                requestAnimationFrame(animate);
+            } else {
+                this.velocity = 0;
+                isMovingLeft = false;
+                isMovingRight = false;
+            }
+        };
+        requestAnimationFrame(animate);
     }
 }
 
