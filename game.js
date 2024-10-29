@@ -98,7 +98,6 @@ let isMovingLeft = false;
 let gameRunning = false;
 let countdownValue = 3;
 let initialJump = true;
-let touchStartX = 0;
 
 // Cargar imágenes
 const lifeIcon = new Image();
@@ -144,7 +143,10 @@ const player = {
     img: new Image(),
     isJumping: false,
     isInvulnerable: false,
-    invulnerabilityTime: 2000
+    invulnerabilityTime: 2000,  // <- Se añadió la coma aquí
+    velocity: 0,
+    targetX: 0,
+    lerp: 0.1
 };
 player.img.src = 'personaje1.2.png';
 
@@ -541,12 +543,13 @@ document.addEventListener("keyup", (e) => {
 });
 
 // Variables para el control táctil
-let isTouching = false;
-let touchX = 0;
-
-// Manejo de controles táctiles
-let initialTouchX = 0;
-let initialTouchTime = 0;
+let touchStartX = 0;
+let touchCurrentX = 0;
+let lastTouchX = 0;
+let velocityX = 0;
+const friction = 0.95; // Factor de fricción para desacelerar suavemente
+const maxVelocity = 15; // Velocidad máxima permitida
+const sensitivity = 0.5; // Factor de sensibilidad para el movimiento
 
 // Modificar el evento touchstart
 canvas.addEventListener("touchstart", (e) => {
@@ -555,29 +558,60 @@ canvas.addEventListener("touchstart", (e) => {
     isTouching = true;
 });
 
-// Modificar el evento touchmove
+// Eventos táctiles mejorados
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    touchStartX = e.touches[0].clientX;
+    touchCurrentX = touchStartX;
+    lastTouchX = touchStartX;
+    velocityX = 0;
+    player.targetX = player.x;
+});
+
 canvas.addEventListener("touchmove", (e) => {
-    if (isTouching) {
-        const currentTouchX = e.touches[0].clientX;
-        const deltaX = currentTouchX - initialTouchX;
-        
-        // Calcular la velocidad en función de la distancia del deslizamiento y el tiempo
-        const timeElapsed = Date.now() - initialTouchTime;
-        const speedFactor = Math.min(Math.abs(deltaX) / timeElapsed, 5); // Limitar la velocidad máxima
-        
-        // Mover el personaje basado en la velocidad calculada
-        player.x += deltaX * speedFactor;
-        
-        // Limitar el personaje dentro de los límites del lienzo
-        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+    e.preventDefault();
+    touchCurrentX = e.touches[0].clientX;
+    
+    // Calcular el desplazamiento y la velocidad
+    const deltaX = touchCurrentX - lastTouchX;
+    velocityX = deltaX * sensitivity;
+    
+    // Limitar la velocidad máxima
+    velocityX = Math.max(-maxVelocity, Math.min(maxVelocity, velocityX));
+    
+    lastTouchX = touchCurrentX;
+});
 
-        // Actualizar el toque inicial para continuar el cálculo
-        initialTouchX = currentTouchX;
-        initialTouchTime = Date.now();
+canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    // La velocidad continuará disminuyendo gradualmente debido a la fricción
+});
+
+// Asegurarse de que el navegador no realice acciones predeterminadas con los eventos táctiles
+document.body.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+document.body.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
+
+// Función para mover el jugador con interpolación
+function updatePlayerPosition() {
+    // Aplicar fricción a la velocidad
+    velocityX *= friction;
+    
+    // Actualizar la posición objetivo basada en la velocidad
+    player.targetX += velocityX;
+    
+    // Mantener el objetivo dentro de los límites del canvas
+    player.targetX = Math.max(0, Math.min(canvas.width - player.width, player.targetX));
+    
+    // Interpolar suavemente hacia la posición objetivo
+    player.x += (player.targetX - player.x) * player.lerp;
+    
+    // Manejar el envolvimiento de pantalla
+    if (player.x > canvas.width) {
+        player.x = 0;
+        player.targetX = 0;
+    } else if (player.x + player.width < 0) {
+        player.x = canvas.width;
+        player.targetX = canvas.width;
     }
-});
-
-// Modificar el evento touchend
-canvas.addEventListener("touchend", () => {
-    isTouching = false;
-});
+}
