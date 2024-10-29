@@ -540,31 +540,50 @@ document.addEventListener("keyup", (e) => {
     if (e.code === "ArrowLeft") isMovingLeft = false;
 });
 
+// Variables para el control táctil
+let isTouching = false;
+let touchX = 0;
+
 // Manejo de controles táctiles
 canvas.addEventListener("touchstart", (e) => {
-    touchStartX = e.touches[0].clientX;
+    // Iniciar el movimiento con el toque
+    isTouching = true;
+    touchX = e.touches[0].clientX;
 });
 
 canvas.addEventListener("touchmove", (e) => {
-    const touchX = e.touches[0].clientX;
-    const diffX = touchX - touchStartX;
+    if (isTouching) {
+        // Obtener la posición del toque y ajustar el movimiento
+        const newTouchX = e.touches[0].clientX;
+        const moveThreshold = 5; // Sensibilidad para el movimiento
 
-    if (diffX > 10) isMovingRight = true;
-    else if (diffX < -10) isMovingLeft = true;
+        // Mover a la derecha o izquierda según la posición del toque
+        if (newTouchX - touchX > moveThreshold) {
+            isMovingRight = true;
+            isMovingLeft = false;
+        } else if (touchX - newTouchX > moveThreshold) {
+            isMovingRight = false;
+            isMovingLeft = true;
+        } else {
+            isMovingRight = false;
+            isMovingLeft = false;
+        }
+
+        // Actualizar la posición inicial para la siguiente iteración
+        touchX = newTouchX;
+    }
 });
 
 canvas.addEventListener("touchend", () => {
+    // Detener el movimiento cuando se retira el toque
     isMovingRight = false;
     isMovingLeft = false;
-});
-
-canvas.addEventListener('touchend', () => {
-    isMovingRight = false;
-    isMovingLeft = false;
+    isTouching = false;
 });
 
 window.addEventListener('resize', resizeCanvas);
 
+// Evitar el scroll en dispositivos móviles
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
-}, { passive: false }); 
+}, { passive: false });
