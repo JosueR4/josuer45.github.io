@@ -543,32 +543,29 @@ document.addEventListener("keyup", (e) => {
 //Manejo de control táctil
 
 let touchStartX = 0;
-let touchCurrentX = 0;
-let isDragging = false;
+let touchStartY = 0;
 
 canvas.addEventListener("touchstart", (e) => {
     touchStartX = e.touches[0].clientX;
-    isDragging = true;
+    touchStartY = e.touches[0].clientY;
 });
 
 canvas.addEventListener("touchmove", (e) => {
-    if (!isDragging) return;
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const diffX = touchX - touchStartX;
+    const diffY = touchY - touchStartY;
 
-    touchCurrentX = e.touches[0].clientX;
-    const diffX = touchCurrentX - touchStartX;
-
-    if (diffX > 10) isMovingRight = true;
-    else if (diffX < -10) isMovingLeft = true;
-    else {
-        isMovingRight = false;
-        isMovingLeft = false;
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 10) isMovingRight = true;
+        else if (diffX < -10) isMovingLeft = true;
     }
 
-    touchStartX = touchCurrentX; // Update start position for continuous smooth movement
+    touchStartX = touchX;
+    touchStartY = touchY;
 });
 
 canvas.addEventListener("touchend", () => {
-    isDragging = false;
     isMovingRight = false;
     isMovingLeft = false;
 });
