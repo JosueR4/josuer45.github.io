@@ -546,42 +546,34 @@ let touchX = 0;
 
 // Manejo de controles táctiles
 canvas.addEventListener("touchstart", (e) => {
-    // Iniciar el movimiento con el toque
-    isTouching = true;
+    // Tomar la posición inicial del toque y comenzar el seguimiento
     touchX = e.touches[0].clientX;
+    isTouching = true;
 });
 
 canvas.addEventListener("touchmove", (e) => {
     if (isTouching) {
-        // Obtener la posición del toque y ajustar el movimiento
+        // Actualizar la posición del personaje en base a la posición del toque
         const newTouchX = e.touches[0].clientX;
-        const moveThreshold = 5; // Sensibilidad para el movimiento
-
-        // Mover a la derecha o izquierda según la posición del toque
-        if (newTouchX - touchX > moveThreshold) {
-            isMovingRight = true;
-            isMovingLeft = false;
-        } else if (touchX - newTouchX > moveThreshold) {
-            isMovingRight = false;
-            isMovingLeft = true;
-        } else {
-            isMovingRight = false;
-            isMovingLeft = false;
-        }
-
+        
+        // Calcular el movimiento como la diferencia entre el toque actual e inicial
+        const deltaX = newTouchX - touchX;
+        
+        // Actualizar la posición del jugador directamente
+        player.x += deltaX;
+        
+        // Limitar el movimiento del jugador dentro de los bordes de la pantalla
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        
         // Actualizar la posición inicial para la siguiente iteración
         touchX = newTouchX;
     }
 });
 
 canvas.addEventListener("touchend", () => {
-    // Detener el movimiento cuando se retira el toque
-    isMovingRight = false;
-    isMovingLeft = false;
+    // Dejar de mover el personaje cuando se retira el toque
     isTouching = false;
 });
-
-window.addEventListener('resize', resizeCanvas);
 
 // Evitar el scroll en dispositivos móviles
 document.body.addEventListener('touchmove', (e) => {
