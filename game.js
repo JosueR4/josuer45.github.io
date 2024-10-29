@@ -545,37 +545,39 @@ let isTouching = false;
 let touchX = 0;
 
 // Manejo de controles táctiles
+let initialTouchX = 0;
+let initialTouchTime = 0;
+
+// Modificar el evento touchstart
 canvas.addEventListener("touchstart", (e) => {
-    // Tomar la posición inicial del toque y comenzar el seguimiento
-    touchX = e.touches[0].clientX;
+    initialTouchX = e.touches[0].clientX;
+    initialTouchTime = Date.now(); // Almacenar el tiempo del toque inicial
     isTouching = true;
 });
 
+// Modificar el evento touchmove
 canvas.addEventListener("touchmove", (e) => {
     if (isTouching) {
-        // Actualizar la posición del personaje en base a la posición del toque
-        const newTouchX = e.touches[0].clientX;
+        const currentTouchX = e.touches[0].clientX;
+        const deltaX = currentTouchX - initialTouchX;
         
-        // Calcular el movimiento como la diferencia entre el toque actual e inicial
-        const deltaX = newTouchX - touchX;
+        // Calcular la velocidad en función de la distancia del deslizamiento y el tiempo
+        const timeElapsed = Date.now() - initialTouchTime;
+        const speedFactor = Math.min(Math.abs(deltaX) / timeElapsed, 5); // Limitar la velocidad máxima
         
-        // Actualizar la posición del jugador directamente
-        player.x += deltaX;
+        // Mover el personaje basado en la velocidad calculada
+        player.x += deltaX * speedFactor;
         
-        // Limitar el movimiento del jugador dentro de los bordes de la pantalla
+        // Limitar el personaje dentro de los límites del lienzo
         player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-        
-        // Actualizar la posición inicial para la siguiente iteración
-        touchX = newTouchX;
+
+        // Actualizar el toque inicial para continuar el cálculo
+        initialTouchX = currentTouchX;
+        initialTouchTime = Date.now();
     }
 });
 
+// Modificar el evento touchend
 canvas.addEventListener("touchend", () => {
-    // Dejar de mover el personaje cuando se retira el toque
     isTouching = false;
 });
-
-// Evitar el scroll en dispositivos móviles
-document.body.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-}, { passive: false });
