@@ -540,20 +540,29 @@ document.addEventListener("keyup", (e) => {
     if (e.code === "ArrowLeft") isMovingLeft = false;
 });
 
-// Variables para el control táctil
-let isTouching = false;
-let touchX = 0;
+//Manejo de control táctil
 
-// Manejo de controles táctiles
+let touchStartX = 0;
+let touchStartY = 0;
+
 canvas.addEventListener("touchstart", (e) => {
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
 });
 
 canvas.addEventListener("touchmove", (e) => {
     const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
     const diffX = touchX - touchStartX;
-    if (diffX > 10) isMovingRight = true;
-    else if (diffX < -10) isMovingLeft = true;
+    const diffY = touchY - touchStartY;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 10) isMovingRight = true;
+        else if (diffX < -10) isMovingLeft = true;
+    }
+
+    touchStartX = touchX;
+    touchStartY = touchY;
 });
 
 canvas.addEventListener("touchend", () => {
