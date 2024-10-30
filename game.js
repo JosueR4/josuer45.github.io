@@ -98,6 +98,7 @@ let isMovingLeft = false;
 let gameRunning = false;
 let countdownValue = 3;
 let initialJump = true;
+let touchStartX = 0;
 
 // Cargar imágenes
 const lifeIcon = new Image();
@@ -142,10 +143,9 @@ const player = {
     maxFallSpeed: 12,
     img: new Image(),
     isJumping: false,
+    jumpCount: 0, // Contador para el doble salto
     isInvulnerable: false,
-    invulnerabilityTime: 2000,
-    targetX: canvas.width / 2 - 20,  // Inicializar en la misma posición que x
-    velocityX: 0                     // Velocidad actual del movimiento horizontal
+    invulnerabilityTime: 2000
 };
 player.img.src = 'personaje1.2.png';
 
@@ -308,22 +308,18 @@ function updateEnemies() {
 }
 
 function movePlayer() {
-
-    player.velocityX *= FRICTION;
-    player.x += player.velocityX;
-
-    if (player.x > canvas.width) {
-        player.x = 0;
-    } else if (player.x + player.width < 0) {
-        player.x = canvas.width - player.width;
+    if (isMovingRight) {
+        player.x += player.dx;
+        if (player.x > canvas.width) player.x = 0;
     }
-
-    // Resto de la lógica de movimiento vertical existente
+    if (isMovingLeft) {
+        player.x -= player.dx;
+        if (player.x + player.width < 0) player.x = canvas.width;
+    }
+    
     player.y += player.dy;
     player.dy += player.gravity;
-    if (player.dy > player.maxFallSpeed) {
-        player.dy = player.maxFallSpeed;
-    }
+    if (player.dy > player.maxFallSpeed) player.dy = player.maxFallSpeed;
 
     // Colisión con plataformas
     platforms.forEach(plat => {
@@ -335,17 +331,18 @@ function movePlayer() {
             player.dy > 0) {
 
             if (plat.type === 'breakable') {
-                if (plat.rebounded) {
-                    plat.broken = true;
-                } else {
+                if (plat.rebounded) plat.broken = true;
+                else {
                     plat.rebounded = true;
                     player.dy = player.jumpPower;
                     player.isJumping = true;
+                    player.jumpCount = 1; // Reiniciar contador de saltos al tocar una plataforma
                 }
             } else {
                 player.dy = player.jumpPower;
                 player.isJumping = true;
-                if (!initialJump) score++;
+                player.jumpCount = 1; // Reiniciar contador de saltos
+                score++;
             }
         }
     });
@@ -357,10 +354,21 @@ function movePlayer() {
         player.y = canvas.height / 3;
         platforms.forEach(plat => plat.y += diff);
         enemy2.y += diff;
-        if (heart.active) {
-            heart.y += diff;
-        }
+        if (heart.active) heart.y += diff;
     }
+
+    // Verificar caída
+    if (player.y - player.height > canvas.height) endGame();
+}
+
+// Función de salto que permite el doble salto
+function handleJump() {
+    if (player.jumpCount < 2) { // Permitir un segundo salto
+        player.dy = player.jumpPower;
+        player.isJumping = true;
+        player.jumpCount++;
+    }
+}
 
     // Verificar caída
     const isOnAnyPlatform = platforms.some(plat => 
@@ -376,7 +384,6 @@ function movePlayer() {
     if (initialJump && player.isJumping) {
         initialJump = false;
     }
-}
 
 function checkEnemyCollision() {
     if (player.isInvulnerable) return;
@@ -479,8 +486,6 @@ function startGame() {
     heart.cooldown = false;
     heart.lastSpawnTime = Date.now();
 
-    initTouchControls();
-
     // Reiniciar enemigos
     enemy1.active = false;
     enemy1.y = -50;
@@ -534,7 +539,7 @@ function retryGame() {
 document.addEventListener("keydown", (e) => {
     if (e.code === "ArrowRight") isMovingRight = true;
     if (e.code === "ArrowLeft") isMovingLeft = true;
-    if (e.code === "Space" && !gameRunning) startGame();
+    if (e.code === "Space" && gameRunning) handleJump();
 });
 
 document.addEventListener("keyup", (e) => {
@@ -543,118 +548,12 @@ document.addEventListener("keyup", (e) => {
 });
 
 // Variables para el control táctil
-let touchStartX = null;
-let lastTouchX = null;
-const TOUCH_SENSITIVITY = 1.5;
-const FRICTION = 0.92;
-const MAX_VELOCITY = 15;
+let isTouching = false;
+let touchX = 0;
 
-// Modificar el evento touchstart
+// Manejo de controles táctiles
 canvas.addEventListener("touchstart", (e) => {
-    initialTouchX = e.touches[0].clientX;
-    initialTouchTime = Date.now(); // Almacenar el tiempo del toque inicial
+    touchX = e.touches[0].clientX;
     isTouching = true;
+    handleJump(); // Realizar el salto al iniciar el toque
 });
-
-// Eventos táctiles mejorados
-canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    touchStartX = e.touches[0].clientX;
-    touchCurrentX = touchStartX;
-    lastTouchX = touchStartX;
-    velocityX = 0;
-    player.targetX = player.x;
-});
-
-canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-    touchCurrentX = e.touches[0].clientX;
-    
-    // Calcular el desplazamiento y la velocidad
-    const deltaX = touchCurrentX - lastTouchX;
-    velocityX = deltaX * sensitivity;
-    
-    // Limitar la velocidad máxima
-    velocityX = Math.max(-maxVelocity, Math.min(maxVelocity, velocityX));
-    
-    lastTouchX = touchCurrentX;
-});
-
-canvas.addEventListener("touchend", (e) => {
-    e.preventDefault();
-    // La velocidad continuará disminuyendo gradualmente debido a la fricción
-});
-
-// Asegurarse de que el navegador no realice acciones predeterminadas con los eventos táctiles
-document.body.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-document.body.addEventListener('touchmove', (e) => {
-    if (gameRunning) {
-        e.preventDefault();
-    }
-}, { passive: false });
-document.body.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
-
-// Función para mover el jugador con interpolación
-function updatePlayerPosition() {
-    // Aplicar fricción a la velocidad
-    velocityX *= friction;
-    
-    // Actualizar la posición objetivo basada en la velocidad
-    player.targetX += velocityX;
-    
-    // Mantener el objetivo dentro de los límites del canvas
-    player.targetX = Math.max(0, Math.min(canvas.width - player.width, player.targetX));
-    
-    // Interpolar suavemente hacia la posición objetivo
-    player.x += (player.targetX - player.x) * player.lerp;
-    
-    // Manejar el envolvimiento de pantalla
-    if (player.x > canvas.width) {
-        player.x = 0;
-        player.targetX = 0;
-    } else if (player.x + player.width < 0) {
-        player.x = canvas.width;
-        player.targetX = canvas.width;
-    }
-}
-
-function initTouchControls() {
-    // Eliminar eventos táctiles existentes si los hay
-    canvas.removeEventListener('touchstart', () => {});
-    canvas.removeEventListener('touchmove', () => {});
-    canvas.removeEventListener('touchend', () => {});
-    
-    // Agregar nuevos controladores de eventos táctiles
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-}
-
-function handleTouchStart(e) {
-    e.preventDefault();
-    touchStartX = e.touches[0].clientX;
-    lastTouchX = touchStartX;
-    player.velocityX = 0;
-}
-
-function handleTouchMove(e) {
-    e.preventDefault();
-    if (touchStartX === null) return;
-
-    const currentTouchX = e.touches[0].clientX;
-    const deltaX = currentTouchX - lastTouchX;
-    
-    // Actualizar la velocidad basada en el movimiento del dedo
-    player.velocityX += deltaX * TOUCH_SENSITIVITY;
-    
-    // Limitar la velocidad máxima
-    player.velocityX = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, player.velocityX));
-    
-    lastTouchX = currentTouchX;
-}
-
-function handleTouchEnd(e) {
-    e.preventDefault();
-    touchStartX = null;
-    lastTouchX = null;
-}
