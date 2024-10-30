@@ -9,9 +9,11 @@
 <body>
     <div id="menu">
         <h1>Animal Jump</h1>
-   
-    <p><button onclick="showCharacterSelect()">Seleccionar Personaje</button></p>
-    <button onclick="startGame()">Iniciar Juego</button>
+        <!-- Contenedor del mejor puntaje -->
+        <p>Mejor Puntuación: <span id="bestScore">0</span></p>
+
+        <p><button onclick="showCharacterSelect()">Seleccionar Personaje</button></p>
+        <button onclick="startGame()">Iniciar Juego</button>
     </div>
 
     <div id="characterSelect" class="hidden">
@@ -20,26 +22,26 @@
             <div class="character-card" onclick="selectCharacter('personaje1.2')" id="char1">
                 <img src="personaje1.2.png" alt="Personaje 1">
                 <p>Personaje 1</p>
-                <span class="locked">Desbloqueado</span>
+                <span>Desbloqueado</span>
             </div>
-            <div class="character-card locked" onclick="selectCharacter('personaje2')" id="char2">
+            <div class="character-card" onclick="selectCharacter('personaje2')" id="char2">
                 <img src="personaje2.png" alt="Personaje 2">
                 <p>Personaje 2</p>
-                <span class="locked">Bloqueado (40 pts)</span>
+                <span>Desbloqueado</span>
             </div>
-            <div class="character-card locked" onclick="selectCharacter('personaje3')" id="char3">
+            <div class="character-card" onclick="selectCharacter('personaje3')" id="char3">
                 <img src="personaje3.png" alt="Personaje 3">
                 <p>Personaje 3</p>
-                <span class="locked">Bloqueado (60 pts)</span>
+                <span>Desbloqueado</span>
             </div>
-            <div class="character-card locked" onclick="selectCharacter('personaje4')" id="char4">
+            <div class="character-card" onclick="selectCharacter('personaje4')" id="char4">
                 <img src="personaje4.png" alt="Personaje 4">
                 <p>Personaje 4</p>
-                <span class="locked">Bloqueado (100 pts)</span>
+                <span>Desbloqueado</span>
             </div>
         </div>
         <button onclick="confirmSelection()">Seleccionar</button>
-    <button onclick="goToMenu()">Salir</button>
+        <button onclick="goToMenu()">Salir</button>
     </div>
     
     <div id="gameContainer" class="hidden">
