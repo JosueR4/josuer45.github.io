@@ -86,6 +86,8 @@ body {
 .locked {
     color: #ff4444;
     font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+    opacity: 0.5; /* Más tenue para mostrar que está bloqueado */
+    cursor: not-allowed;
 }
 
 /* Estilos de botones */
