@@ -8,12 +8,13 @@ const characterUnlocks = {
     'personaje4': 100
 };
 
-// Cargar puntuación máxima del localStorage
+// Cargar puntuación máxima del localStorage y mostrar en el menú
 function loadHighScore() {
     const savedScore = localStorage.getItem('highestScore');
     if (savedScore) {
         highestScore = parseInt(savedScore);
     }
+    document.getElementById('bestScore').textContent = highestScore; // Muestra el mejor puntaje
     updateCharacterAvailability();
 }
 
@@ -593,10 +594,21 @@ function areImagesLoaded() {
 
 function endGame() {
     gameRunning = false;
+    document.getElementById("finalScore").textContent = score;
+
+    // Verificar y actualizar el mejor puntaje
+    if (score > highestScore) {
+        highestScore = score;
+        localStorage.setItem('highestScore', highestScore);
+        document.getElementById('bestScore').textContent = highestScore; // Actualiza en el menú
+    }
+
     document.getElementById("gameContainer").classList.add("hidden");
     document.getElementById("gameOver").classList.remove("hidden");
-    document.getElementById("finalScore").textContent = score;
 }
+
+// Llamar a loadHighScore al inicio para mostrar el mejor puntaje en el menú
+window.onload = loadHighScore;
 
 function retryGame() {
     document.getElementById("gameOver").classList.add("hidden");
@@ -653,3 +665,4 @@ document.addEventListener('DOMContentLoaded', () => {
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false });
+
