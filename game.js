@@ -168,10 +168,10 @@ const player = {
     height: 40,
     dx: 6,
     dy: 0,
-    gravity: 0.4,
+    gravity: 0.5,
     jumpPower: -12,
     maxFallSpeed: 12,
-    tiltSpeed: 0.15, // Factor de velocidad para el movimiento basado en la inclinación
+    tiltSpeed: 0.16, // Factor de velocidad para el movimiento basado en la inclinación
     img: new Image(),
     isJumping: false,
     isInvulnerable: false,
@@ -208,7 +208,7 @@ const platformConfig = {
     width: 70,
     height: 28,
     baseCount: 10,
-    spacing: canvas.height / 5,
+    spacing: canvas.height / 4,
     types: {
         normal: { probability: 0.7 },
         moving: { probability: 0.2 },
