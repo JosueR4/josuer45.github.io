@@ -97,7 +97,6 @@ let isMovingRight = false;
 let isMovingLeft = false;
 let gameRunning = false;
 let countdownValue = 3;
-let initialJump = true;
 let touchStartX = 0;
 
 // Cargar imágenes
@@ -136,14 +135,13 @@ const player = {
     y: canvas.height - 60,
     width: 40,
     height: 40,
-    dx: 6,
+    dx: 6, // Velocidad horizontal
     dy: 0,
     gravity: 0.4,
-    jumpPower: -15,
+    jumpPower: -12, // Reducido para un rebote más natural
     maxFallSpeed: 12,
     img: new Image(),
     isJumping: false,
-    jumpCount: 0, // Contador para el doble salto
     isInvulnerable: false,
     invulnerabilityTime: 2000
 };
@@ -192,6 +190,9 @@ let highestPlatform = 0;
 
 // Funciones del juego
 function createPlatform(y) {
+    const minGap = 60; // Espacio mínimo horizontal entre plataformas
+    const maxGap = 200; // Espacio máximo horizontal entre plataformas
+    
     const rand = Math.random();
     let type = 'normal';
     
@@ -201,8 +202,19 @@ function createPlatform(y) {
         type = 'breakable';
     }
 
+    // Asegurar que las plataformas estén alcanzables
+    let x = Math.random() * (canvas.width - platformConfig.width);
+    
+    // Verificar que no haya plataformas demasiado cercanas
+    const nearPlatforms = platforms.filter(p => Math.abs(p.y - y) < platformConfig.spacing);
+    let attempts = 0;
+    while (attempts < 10 && nearPlatforms.some(p => Math.abs(p.x - x) < minGap)) {
+        x = Math.random() * (canvas.width - platformConfig.width);
+        attempts++;
+    }
+
     platforms.push({
-        x: Math.random() * (canvas.width - platformConfig.width),
+        x: x,
         y: y,
         width: platformConfig.width,
         height: platformConfig.height,
@@ -308,57 +320,73 @@ function updateEnemies() {
 }
 
 function movePlayer() {
+    // Movimiento horizontal
     if (isMovingRight) {
         player.x += player.dx;
-        if (player.x > canvas.width) player.x = 0;
+        // Envolver horizontalmente (aparecer en el lado opuesto)
+        if (player.x > canvas.width) {
+            player.x = 0;
+        }
     }
     if (isMovingLeft) {
         player.x -= player.dx;
-        if (player.x + player.width < 0) player.x = canvas.width;
+        if (player.x + player.width < 0) {
+            player.x = canvas.width;
+        }
     }
     
-    player.y += player.dy;
+    // Aplicar gravedad
     player.dy += player.gravity;
-    if (player.dy > player.maxFallSpeed) player.dy = player.maxFallSpeed;
+    if (player.dy > player.maxFallSpeed) {
+        player.dy = player.maxFallSpeed;
+    }
+    
+    // Actualizar posición vertical
+    player.y += player.dy;
 
     // Colisión con plataformas
-    platforms.forEach(plat => {
-        if (!plat.broken && 
-            player.y + player.height > plat.y && 
-            player.y + player.height < plat.y + plat.height + player.dy &&
-            player.x + player.width > plat.x && 
-            player.x < plat.x + plat.width && 
-            player.dy > 0) {
+        if (player.dy > 0) {
+        platforms.forEach(plat => {
+            if (!plat.broken && 
+                player.y + player.height > plat.y && 
+                player.y + player.height < plat.y + plat.height + player.dy &&
+                player.x + player.width > plat.x && 
+                player.x < plat.x + plat.width) {
 
-            if (plat.type === 'breakable') {
-                if (plat.rebounded) plat.broken = true;
-                else {
-                    plat.rebounded = true;
+                if (plat.type === 'breakable') {
+                    if (plat.rebounded) {
+                        plat.broken = true;
+                    } else {
+                        plat.rebounded = true;
+                        player.dy = player.jumpPower;
+                        player.isJumping = true;
+                    }
+                } else {
                     player.dy = player.jumpPower;
                     player.isJumping = true;
-                    player.jumpCount = 1; // Reiniciar contador de saltos al tocar una plataforma
+                    score++;
                 }
-            } else {
-                player.dy = player.jumpPower;
-                player.isJumping = true;
-                player.jumpCount = 1; // Reiniciar contador de saltos
-                score++;
             }
-        }
-    });
+        });
+    }
 
     // Ajuste de cámara
-    if (player.y < canvas.height / 3) {
-        const diff = canvas.height / 3 - player.y;
+    if (player.y < canvas.height / 2) {
+        const diff = canvas.height / 2 - player.y;
         cameraY -= diff;
-        player.y = canvas.height / 3;
+        player.y = canvas.height / 2;
+        
+        // Mover todos los elementos hacia abajo
         platforms.forEach(plat => plat.y += diff);
+        if (enemy1.active) enemy1.y += diff;
         enemy2.y += diff;
         if (heart.active) heart.y += diff;
     }
 
-    // Verificar caída
-    if (player.y - player.height > canvas.height) endGame();
+    // Game over si el jugador cae demasiado
+    if (player.y > canvas.height + player.height) {
+        endGame();
+    }
 }
 
 // Función de salto que permite el doble salto
@@ -473,14 +501,11 @@ function startGame() {
     }
 
     lives = 3;
-    document.getElementById("menu").classList.add("hidden");
-    document.getElementById("gameContainer").classList.remove("hidden");
     score = 0;
     player.x = canvas.width / 2 - 20;
     player.y = canvas.height - 60;
-    player.dy = 0;
+    player.dy = player.jumpPower; // Comenzar con un salto inicial
     player.isInvulnerable = false;
-    initialJump = true;
     cameraY = 0;
     heart.active = false;
     heart.cooldown = false;
@@ -493,7 +518,12 @@ function startGame() {
     enemy2.y = canvas.height / 2;
     enemy2.direction = 1;
 
+    // Limpiar y crear nuevas plataformas
+    platforms = [];
     createPlatforms();
+    
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("gameContainer").classList.remove("hidden");
     
     const countdown = document.getElementById("countdown");
     countdown.classList.remove("hidden");
@@ -553,33 +583,32 @@ let touchX = 0;
 
 // Manejo de controles táctiles
 canvas.addEventListener("touchstart", (e) => {
-    touchX = e.touches[0].clientX;
-    isTouching = true;
-    handleJump(); // Realizar el salto al iniciar el toque
+    e.preventDefault();
+    touchStartX = e.touches[0].clientX;
+    touchX = touchStartX;
 });
 
 canvas.addEventListener("touchmove", (e) => {
-    if (isTouching) {
-        // Actualizar la posición del personaje en base a la posición del toque
-        const newTouchX = e.touches[0].clientX;
-        
-        // Calcular el movimiento como la diferencia entre el toque actual e inicial
-        const deltaX = newTouchX - touchX;
-        
-        // Actualizar la posición del jugador directamente
-        player.x += deltaX;
-        
-        // Limitar el movimiento del jugador dentro de los bordes de la pantalla
-        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-        
-        // Actualizar la posición inicial para la siguiente iteración
-        touchX = newTouchX;
+    e.preventDefault();
+    const currentX = e.touches[0].clientX;
+    const diffX = currentX - touchX;
+
+     // Determinar dirección basada en el movimiento del dedo
+     if (diffX > 0) {
+        isMovingRight = true;
+        isMovingLeft = false;
+    } else if (diffX < 0) {
+        isMovingLeft = true;
+        isMovingRight = false;
     }
+    
+    touchX = currentX;
 });
 
-canvas.addEventListener("touchend", () => {
-    // Dejar de mover el personaje cuando se retira el toque
-    isTouching = false;
+canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    isMovingRight = false;
+    isMovingLeft = false;
 });
 
 // Evitar el scroll en dispositivos móviles
