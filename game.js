@@ -10,29 +10,51 @@ const characterUnlocks = {
 
 // Cargar puntuación máxima del localStorage y mostrar en el menú
 function loadHighScore() {
-    const savedScore = localStorage.getItem('highestScore');
+    const savedScore = localStorage.getItem('highestScore'); // Carga el puntaje de localStorage
     if (savedScore) {
         highestScore = parseInt(savedScore);
+    } else {
+        highestScore = 0; // Si no hay puntaje guardado, inicia en 0
     }
-    document.getElementById('bestScore').textContent = highestScore; // Muestra el mejor puntaje
-    updateCharacterAvailability();
+    document.getElementById('highScoreDisplay').textContent = "Mejor Puntaje: " + highestScore;
+    updateCharacterAvailability(); // Actualiza la disponibilidad de personajes
 }
+
+// Ejecutar al cargar la página
+window.onload = function() {
+    loadHighScore();
+};
 
 // Actualizar disponibilidad de personajes
 function updateCharacterAvailability() {
-    for (const [char, requiredScore] of Object.entries(characterUnlocks)) {
-        const charElement = document.getElementById(`char${char.slice(-1)}`);
-        if (charElement) { // Verificar que el elemento exista
-            if (highestScore >= requiredScore) {
-                charElement.classList.remove('locked');
-                charElement.querySelector('.locked').textContent = 'Desbloqueado';
-            } else {
-                charElement.classList.add('locked');
-                charElement.querySelector('.locked').textContent = `Bloqueado (${requiredScore} pts)`;
-            }
+    for (let character in unlockThresholds) {
+        if (highestScore >= unlockThresholds[character]) {
+            localStorage.setItem(character, 'unlocked'); // Guardar el estado de desbloqueo en localStorage
+        }
+    }
+    // Actualiza el menú de selección de personajes para mostrar los desbloqueados
+    displayUnlockedCharacters();
+}
+
+function displayUnlockedCharacters() {
+    // Recorre cada personaje para verificar su estado de desbloqueo en localStorage
+    for (let character in unlockThresholds) {
+        const characterButton = document.getElementById(character);
+        if (localStorage.getItem(character) === 'unlocked') {
+            characterButton.classList.remove('locked'); // Muestra el personaje como desbloqueado
+            characterButton.disabled = false;           // Habilita el botón
+        } else {
+            characterButton.classList.add('locked');    // Mantiene el personaje bloqueado
+            characterButton.disabled = true;            // Deshabilita el botón
         }
     }
 }
+
+const unlockThresholds = {
+    character1: 10,
+    character2: 20,
+    character3: 30
+};
 
 // Seleccionar personaje
 function selectCharacter(character) {
@@ -594,17 +616,18 @@ function areImagesLoaded() {
 
 function endGame() {
     gameRunning = false;
-    document.getElementById("finalScore").textContent = score;
+    document.getElementById('gameContainer').classList.add('hidden');
+    document.getElementById('gameOver').classList.remove('hidden');
+    document.getElementById('finalScore').textContent = score;
 
-    // Verificar y actualizar el mejor puntaje
+    // Guarda el puntaje más alto si el puntaje actual es mayor
     if (score > highestScore) {
         highestScore = score;
-        localStorage.setItem('highestScore', highestScore);
-        document.getElementById('bestScore').textContent = highestScore; // Actualiza en el menú
+        localStorage.setItem('highestScore', highestScore); // Guarda en localStorage
     }
 
-    document.getElementById("gameContainer").classList.add("hidden");
-    document.getElementById("gameOver").classList.remove("hidden");
+    // Verificar si se ha desbloqueado algún personaje nuevo
+    updateCharacterAvailability();
 }
 
 // Llamar a loadHighScore al inicio para mostrar el mejor puntaje en el menú
@@ -665,4 +688,3 @@ document.addEventListener('DOMContentLoaded', () => {
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false });
-
