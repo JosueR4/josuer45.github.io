@@ -557,3 +557,32 @@ canvas.addEventListener("touchstart", (e) => {
     isTouching = true;
     handleJump(); // Realizar el salto al iniciar el toque
 });
+
+canvas.addEventListener("touchmove", (e) => {
+    if (isTouching) {
+        // Actualizar la posición del personaje en base a la posición del toque
+        const newTouchX = e.touches[0].clientX;
+        
+        // Calcular el movimiento como la diferencia entre el toque actual e inicial
+        const deltaX = newTouchX - touchX;
+        
+        // Actualizar la posición del jugador directamente
+        player.x += deltaX;
+        
+        // Limitar el movimiento del jugador dentro de los bordes de la pantalla
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        
+        // Actualizar la posición inicial para la siguiente iteración
+        touchX = newTouchX;
+    }
+});
+
+canvas.addEventListener("touchend", () => {
+    // Dejar de mover el personaje cuando se retira el toque
+    isTouching = false;
+});
+
+// Evitar el scroll en dispositivos móviles
+document.body.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+}, { passive: false });
