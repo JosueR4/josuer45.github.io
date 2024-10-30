@@ -168,8 +168,8 @@ const player = {
     height: 40,
     dx: 6,
     dy: 0,
-    gravity: 0.3,
-    jumpPower: -11,
+    gravity: 0.5,
+    jumpPower: -17,
     maxFallSpeed: 12,
     tiltSpeed: 0.16, // Factor de velocidad para el movimiento basado en la inclinación
     img: new Image(),
