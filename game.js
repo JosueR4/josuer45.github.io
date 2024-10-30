@@ -26,27 +26,23 @@ window.onload = function() {
 
 // Actualizar disponibilidad de personajes
 function updateCharacterAvailability() {
-    const characterButton = document.getElementById('characterButton');
-    const unlockScore = characterUnlocks[selectedCharacter];
-    
-    if (highestScore >= unlockScore) {
-        characterButton.classList.remove('locked');
-        characterButton.disabled = false;
-    } else {
-        characterButton.classList.add('locked');
-        characterButton.disabled = true;
-    }
-
     for (let character in characterUnlocks) {
-        const charButton = document.getElementById(character);
+        const characterButton = document.getElementById(character);
         if (highestScore >= characterUnlocks[character]) {
-            charButton.classList.remove('locked');
-            charButton.disabled = false;
+            characterButton.classList.remove('locked');
+            characterButton.disabled = false;
         } else {
-            charButton.classList.add('locked');
-            charButton.disabled = true;
+            characterButton.classList.add('locked');
+            characterButton.disabled = true;
         }
     }
+
+    // Asegúrate de que el personaje seleccionado se resalte visualmente
+    const selectedCharacterButton = document.getElementById(`char${selectedCharacter.slice(-1)}`);
+    document.querySelectorAll('.character-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    selectedCharacterButton.classList.add('selected');
 }
 
 function displayUnlockedCharacters() {
