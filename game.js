@@ -129,17 +129,49 @@ const heart = {
     speed: 2
 };
 
+// Variables para el control de movimiento
+let accelerometer = {
+    x: 0,
+    y: 0,
+    z: 0
+};
+
+// Solicitar permisos y configurar el sensor de movimiento
+function setupDeviceMotion() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && 
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13+ requiere permiso explícito
+        DeviceOrientationEvent.requestPermission()
+            .then(response => {
+                if (response === 'granted') {
+                    window.addEventListener('deviceorientation', handleDeviceMotion);
+                }
+            })
+            .catch(console.error);
+    } else {
+        // Dispositivos Android y otros
+        window.addEventListener('deviceorientation', handleDeviceMotion);
+    }
+}
+
+// Manejar el movimiento del dispositivo
+function handleDeviceMotion(event) {
+    // Obtener la inclinación lateral (gamma)
+    accelerometer.x = event.gamma;
+}
+
 // Configuración del jugador
 const player = {
     x: canvas.width / 2 - 20,
     y: canvas.height - 60,
     width: 40,
     height: 40,
-    dx: 6, // Velocidad horizontal
+    dx: 6,
     dy: 0,
     gravity: 0.4,
-    jumpPower: -12, // Reducido para un rebote más natural
+    jumpPower: -12,
     maxFallSpeed: 12,
+    tiltSpeed: 0.15, // Factor de velocidad para el movimiento basado en la inclinación
     img: new Image(),
     isJumping: false,
     isInvulnerable: false,
@@ -320,19 +352,20 @@ function updateEnemies() {
 }
 
 function movePlayer() {
-    // Movimiento horizontal
-    if (isMovingRight) {
-        player.x += player.dx;
-        // Envolver horizontalmente (aparecer en el lado opuesto)
-        if (player.x > canvas.width) {
-            player.x = 0;
-        }
-    }
-    if (isMovingLeft) {
-        player.x -= player.dx;
-        if (player.x + player.width < 0) {
-            player.x = canvas.width;
-        }
+    // Movimiento basado en la inclinación del dispositivo
+    let tilt = accelerometer.x;
+    
+    // Limitar el rango de inclinación
+    tilt = Math.max(-45, Math.min(45, tilt));
+    
+    // Convertir la inclinación en movimiento horizontal
+    player.x += (tilt * player.tiltSpeed);
+    
+    // Envolver horizontalmente (aparecer en el lado opuesto)
+    if (player.x > canvas.width) {
+        player.x = 0;
+    } else if (player.x + player.width < 0) {
+        player.x = canvas.width;
     }
     
     // Aplicar gravedad
@@ -344,8 +377,8 @@ function movePlayer() {
     // Actualizar posición vertical
     player.y += player.dy;
 
-    // Colisión con plataformas
-        if (player.dy > 0) {
+    // Colisión con plataformas (solo cuando el jugador está cayendo)
+    if (player.dy > 0) {
         platforms.forEach(plat => {
             if (!plat.broken && 
                 player.y + player.height > plat.y && 
@@ -370,13 +403,12 @@ function movePlayer() {
         });
     }
 
-    // Ajuste de cámara
+    // Ajuste de cámara basado en la posición del jugador
     if (player.y < canvas.height / 2) {
         const diff = canvas.height / 2 - player.y;
         cameraY -= diff;
         player.y = canvas.height / 2;
         
-        // Mover todos los elementos hacia abajo
         platforms.forEach(plat => plat.y += diff);
         if (enemy1.active) enemy1.y += diff;
         enemy2.y += diff;
@@ -500,28 +532,33 @@ function startGame() {
         return;
     }
 
+    // Configurar el sensor de movimiento
+    setupDeviceMotion();
+
+    // Reiniciar variables del juego
     lives = 3;
     score = 0;
     player.x = canvas.width / 2 - 20;
     player.y = canvas.height - 60;
-    player.dy = player.jumpPower; // Comenzar con un salto inicial
+    player.dy = player.jumpPower;
     player.isInvulnerable = false;
     cameraY = 0;
+    accelerometer = { x: 0, y: 0, z: 0 };
+
+    // Reiniciar elementos del juego
     heart.active = false;
     heart.cooldown = false;
     heart.lastSpawnTime = Date.now();
-
-    // Reiniciar enemigos
     enemy1.active = false;
     enemy1.y = -50;
     enemy2.x = 0;
     enemy2.y = canvas.height / 2;
     enemy2.direction = 1;
 
-    // Limpiar y crear nuevas plataformas
     platforms = [];
     createPlatforms();
     
+    // Configurar la interfaz
     document.getElementById("menu").classList.add("hidden");
     document.getElementById("gameContainer").classList.remove("hidden");
     
@@ -530,6 +567,7 @@ function startGame() {
     countdownValue = 3;
     countdown.textContent = countdownValue;
 
+    // Iniciar el juego después de la cuenta regresiva
     const countdownInterval = setInterval(() => {
         countdownValue--;
         countdown.textContent = countdownValue;
@@ -577,41 +615,41 @@ document.addEventListener("keyup", (e) => {
     if (e.code === "ArrowLeft") isMovingLeft = false;
 });
 
-// Variables para el control táctil
-let isTouching = false;
-let touchX = 0;
-
-// Manejo de controles táctiles
-canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    touchStartX = e.touches[0].clientX;
-    touchX = touchStartX;
-});
-
-canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-    const currentX = e.touches[0].clientX;
-    const diffX = currentX - touchX;
-
-     // Determinar dirección basada en el movimiento del dedo
-     if (diffX > 0) {
-        isMovingRight = true;
-        isMovingLeft = false;
-    } else if (diffX < 0) {
-        isMovingLeft = true;
-        isMovingRight = false;
-    }
+function showOrientationMessage() {
+    const message = document.createElement('div');
+    message.style.position = 'fixed';
+    message.style.top = '50%';
+    message.style.left = '50%';
+    message.style.transform = 'translate(-50%, -50%)';
+    message.style.background = 'rgba(0, 0, 0, 0.8)';
+    message.style.color = 'white';
+    message.style.padding = '20px';
+    message.style.borderRadius = '10px';
+    message.style.textAlign = 'center';
+    message.style.zIndex = '1000';
+    message.innerHTML = 'Por favor, inclina tu dispositivo para mover el personaje.<br>Toca la pantalla para comenzar.';
     
-    touchX = currentX;
+    document.body.appendChild(message);
+    
+    // Remover el mensaje cuando el usuario toque la pantalla
+    document.addEventListener('touchstart', function removeMessage() {
+        message.remove();
+        document.removeEventListener('touchstart', removeMessage);
+    });
+}
+
+// Modificar los event listeners existentes
+document.addEventListener('DOMContentLoaded', () => {
+    // Remover los event listeners táctiles anteriores
+    canvas.removeEventListener("touchstart", null);
+    canvas.removeEventListener("touchmove", null);
+    canvas.removeEventListener("touchend", null);
+    
+    // Mostrar mensaje de orientación al iniciar
+    showOrientationMessage();
 });
 
-canvas.addEventListener("touchend", (e) => {
-    e.preventDefault();
-    isMovingRight = false;
-    isMovingLeft = false;
-});
-
-// Evitar el scroll en dispositivos móviles
+// Prevenir el scroll en dispositivos móviles
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false });
