@@ -151,6 +151,74 @@ button:hover {
     opacity: 0.5;
 }
 
+.custom-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transition: opacity 0.3s ease-in-out;
+    backdrop-filter: blur(5px);
+    border: 2px solid #4CAF50;
+    min-width: 300px;
+    text-align: center;
+}
+
+.custom-notification.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.lock-icon {
+    font-size: 2.5em;
+    animation: shake 0.5s ease-in-out;
+}
+
+.notification-text h3 {
+    margin: 0 0 10px 0;
+    color: #4CAF50;
+}
+
+.notification-text p {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+@keyframes shake {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -60%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translate(-50%, -50%); }
+    to { opacity: 0; transform: translate(-50%, -40%); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.3s ease-in-out forwards;
+}
+
 /* Estilos del juego */
 #gameContainer {
     position: relative;
