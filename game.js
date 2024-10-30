@@ -143,10 +143,9 @@ const player = {
     img: new Image(),
     isJumping: false,
     isInvulnerable: false,
-    invulnerabilityTime: 2000,  // <- Se añadió la coma aquí
-    velocity: 0,
-    targetX: 0,
-    lerp: 0.1
+    invulnerabilityTime: 2000,
+    targetX: canvas.width / 2 - 20,  // Inicializar en la misma posición que x
+    velocityX: 0                     // Velocidad actual del movimiento horizontal
 };
 player.img.src = 'personaje1.2.png';
 
@@ -309,18 +308,17 @@ function updateEnemies() {
 }
 
 function movePlayer() {
-    if (isMovingRight) {
-        player.x += player.dx;
-        if (player.x > canvas.width) {
-            player.x = 0;
-        }
+
+    player.velocityX *= FRICTION;
+    player.x += player.velocityX;
+
+    if (player.x > canvas.width) {
+        player.x = 0;
+    } else if (player.x + player.width < 0) {
+        player.x = canvas.width - player.width;
     }
-    if (isMovingLeft) {
-        player.x -= player.dx;
-        if (player.x + player.width < 0) {
-            player.x = canvas.width;
-        }
-    }
+
+    // Resto de la lógica de movimiento vertical existente
     player.y += player.dy;
     player.dy += player.gravity;
     if (player.dy > player.maxFallSpeed) {
@@ -481,6 +479,8 @@ function startGame() {
     heart.cooldown = false;
     heart.lastSpawnTime = Date.now();
 
+    initTouchControls();
+
     // Reiniciar enemigos
     enemy1.active = false;
     enemy1.y = -50;
@@ -543,13 +543,11 @@ document.addEventListener("keyup", (e) => {
 });
 
 // Variables para el control táctil
-let touchStartX = 0;
-let touchCurrentX = 0;
-let lastTouchX = 0;
-let velocityX = 0;
-const friction = 0.95; // Factor de fricción para desacelerar suavemente
-const maxVelocity = 15; // Velocidad máxima permitida
-const sensitivity = 0.5; // Factor de sensibilidad para el movimiento
+let touchStartX = null;
+let lastTouchX = null;
+const TOUCH_SENSITIVITY = 1.5;
+const FRICTION = 0.92;
+const MAX_VELOCITY = 15;
 
 // Modificar el evento touchstart
 canvas.addEventListener("touchstart", (e) => {
@@ -589,7 +587,11 @@ canvas.addEventListener("touchend", (e) => {
 
 // Asegurarse de que el navegador no realice acciones predeterminadas con los eventos táctiles
 document.body.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+document.body.addEventListener('touchmove', (e) => {
+    if (gameRunning) {
+        e.preventDefault();
+    }
+}, { passive: false });
 document.body.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
 
 // Función para mover el jugador con interpolación
@@ -614,4 +616,45 @@ function updatePlayerPosition() {
         player.x = canvas.width;
         player.targetX = canvas.width;
     }
+}
+
+function initTouchControls() {
+    // Eliminar eventos táctiles existentes si los hay
+    canvas.removeEventListener('touchstart', () => {});
+    canvas.removeEventListener('touchmove', () => {});
+    canvas.removeEventListener('touchend', () => {});
+    
+    // Agregar nuevos controladores de eventos táctiles
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+}
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    touchStartX = e.touches[0].clientX;
+    lastTouchX = touchStartX;
+    player.velocityX = 0;
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (touchStartX === null) return;
+
+    const currentTouchX = e.touches[0].clientX;
+    const deltaX = currentTouchX - lastTouchX;
+    
+    // Actualizar la velocidad basada en el movimiento del dedo
+    player.velocityX += deltaX * TOUCH_SENSITIVITY;
+    
+    // Limitar la velocidad máxima
+    player.velocityX = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, player.velocityX));
+    
+    lastTouchX = currentTouchX;
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault();
+    touchStartX = null;
+    lastTouchX = null;
 }
