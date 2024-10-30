@@ -110,21 +110,45 @@ button:hover {
 }
 
 /* Estados de las tarjetas de personajes */
-.character-card:hover:not(.locked) {
-    transform: scale(1.05);
+.character-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 10px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .character-card.locked {
-    opacity: 0.7;
     cursor: not-allowed;
 }
 
-.character-card.locked img {
-    filter: grayscale(100%);
+.character-card.selected {
+    border: 3px solid #ffd700;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.character-card.selected {
-    border: 3px solid #4CAF50;
+.character-card:not(.locked):hover {
+    transform: scale(1.05);
+}
+
+.character-card span {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.character-card img {
+    width: 100%;
+    height: auto;
+    transition: opacity 0.3s ease;
+}
+
+.character-card.locked img {
+    opacity: 0.5;
 }
 
 /* Estilos del juego */
