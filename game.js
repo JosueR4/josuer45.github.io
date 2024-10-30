@@ -10,30 +10,33 @@ const characterUnlocks = {
 
 // Cargar puntuación máxima del localStorage y mostrar en el menú
 function loadHighScore() {
-    const savedScore = localStorage.getItem('highestScore'); // Carga el puntaje de localStorage
+    const savedScore = localStorage.getItem('highestScore');
     if (savedScore) {
         highestScore = parseInt(savedScore);
     } else {
-        highestScore = 0; // Si no hay puntaje guardado, inicia en 0
+        highestScore = 0;
     }
     document.getElementById('highScoreDisplay').textContent = "Mejor Puntaje: " + highestScore;
-    updateCharacterAvailability(); // Actualiza la disponibilidad de personajes
 }
 
-// Ejecutar al cargar la página
+// Llamada para cargar el puntaje al iniciar la página
 window.onload = function() {
     loadHighScore();
 };
 
 // Actualizar disponibilidad de personajes
 function updateCharacterAvailability() {
-    for (let character in unlockThresholds) {
-        if (highestScore >= unlockThresholds[character]) {
-            localStorage.setItem(character, 'unlocked'); // Guardar el estado de desbloqueo en localStorage
-        }
+    const characterButton = document.getElementById('characterButton'); // Asume que este es el botón del personaje
+    const unlockScore = 50; // Puntaje necesario para desbloquear el personaje
+
+    // Comprueba si el personaje está desbloqueado
+    if (highestScore >= unlockScore) {
+        characterButton.classList.remove('locked'); // Quita la clase "locked"
+        characterButton.disabled = false; // Habilita el botón
+    } else {
+        characterButton.classList.add('locked'); // Mantiene la clase "locked"
+        characterButton.disabled = true; // Deshabilita el botón si no está desbloqueado
     }
-    // Actualiza el menú de selección de personajes para mostrar los desbloqueados
-    displayUnlockedCharacters();
 }
 
 function displayUnlockedCharacters() {
@@ -620,18 +623,19 @@ function endGame() {
     document.getElementById('gameOver').classList.remove('hidden');
     document.getElementById('finalScore').textContent = score;
 
-    // Guarda el puntaje más alto si el puntaje actual es mayor
     if (score > highestScore) {
         highestScore = score;
-        localStorage.setItem('highestScore', highestScore); // Guarda en localStorage
+        localStorage.setItem('highestScore', highestScore); // Guardar en localStorage
     }
 
-    // Verificar si se ha desbloqueado algún personaje nuevo
-    updateCharacterAvailability();
+    loadHighScore(); // Actualizar visualmente el puntaje en pantalla
+    updateCharacterAvailability(); // Verificar y actualizar la disponibilidad del personaje
+
+    // Llamar a loadHighScore al inicio para mostrar el mejor puntaje en el menú
+    window.onload = loadHighScore;
+
 }
 
-// Llamar a loadHighScore al inicio para mostrar el mejor puntaje en el menú
-window.onload = loadHighScore;
 
 function retryGame() {
     document.getElementById("gameOver").classList.add("hidden");
