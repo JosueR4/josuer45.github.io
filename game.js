@@ -26,16 +26,26 @@ window.onload = function() {
 
 // Actualizar disponibilidad de personajes
 function updateCharacterAvailability() {
-    const characterButton = document.getElementById('characterButton'); // Asume que este es el botón del personaje
-    const unlockScore = 50; // Puntaje necesario para desbloquear el personaje
-
-    // Comprueba si el personaje está desbloqueado
+    const characterButton = document.getElementById('characterButton');
+    const unlockScore = characterUnlocks[selectedCharacter];
+    
     if (highestScore >= unlockScore) {
-        characterButton.classList.remove('locked'); // Quita la clase "locked"
-        characterButton.disabled = false; // Habilita el botón
+        characterButton.classList.remove('locked');
+        characterButton.disabled = false;
     } else {
-        characterButton.classList.add('locked'); // Mantiene la clase "locked"
-        characterButton.disabled = true; // Deshabilita el botón si no está desbloqueado
+        characterButton.classList.add('locked');
+        characterButton.disabled = true;
+    }
+
+    for (let character in characterUnlocks) {
+        const charButton = document.getElementById(character);
+        if (highestScore >= characterUnlocks[character]) {
+            charButton.classList.remove('locked');
+            charButton.disabled = false;
+        } else {
+            charButton.classList.add('locked');
+            charButton.disabled = true;
+        }
     }
 }
 
@@ -625,17 +635,12 @@ function endGame() {
 
     if (score > highestScore) {
         highestScore = score;
-        localStorage.setItem('highestScore', highestScore); // Guardar en localStorage
+        localStorage.setItem('highestScore', highestScore.toString());
     }
 
-    loadHighScore(); // Actualizar visualmente el puntaje en pantalla
-    updateCharacterAvailability(); // Verificar y actualizar la disponibilidad del personaje
-
-    // Llamar a loadHighScore al inicio para mostrar el mejor puntaje en el menú
-    window.onload = loadHighScore;
-
+    loadHighScore(); 
+    updateCharacterAvailability();
 }
-
 
 function retryGame() {
     document.getElementById("gameOver").classList.add("hidden");
