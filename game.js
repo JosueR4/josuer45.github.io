@@ -208,7 +208,7 @@ const platformConfig = {
     width: 70,
     height: 28,
     baseCount: 10,
-    spacing: canvas.height / 4,
+    spacing: canvas.height / 7,
     types: {
         normal: { probability: 0.7 },
         moving: { probability: 0.2 },
