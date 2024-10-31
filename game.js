@@ -67,6 +67,27 @@ const unlockThresholds = {
     character3: 30
 };
 
+// Función para mostrar la notificación personalizada
+function showCustomNotification(character) {
+    const notification = document.getElementById('customNotification');
+    const message = document.getElementById('notificationMessage');
+    const pointsNeeded = characterUnlocks[character];
+    
+    message.textContent = `Necesitas ${pointsNeeded} puntos para desbloquear este personaje`;
+    
+    notification.classList.remove('hidden', 'fade-out');
+    notification.classList.add('fade-in');
+    
+    // Cerrar automáticamente después de 3 segundos
+    setTimeout(() => {
+        notification.classList.remove('fade-in');
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 300);
+    }, 3000);
+}
+
 // Seleccionar personaje
 function selectCharacter(character) {
     const charIndex = parseInt(character.slice(-1)) || 1;
@@ -82,7 +103,7 @@ function selectCharacter(character) {
         // Actualizar imagen del jugador
         player.img.src = `${character}.png`;
     } else {
-        alert(`Necesitas ${characterUnlocks[character]} puntos para desbloquear este personaje`);
+        showCustomNotification(character); // Reemplazar el alert con la nueva notificación
     }
 }
 
