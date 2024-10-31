@@ -103,7 +103,7 @@ function selectCharacter(character) {
         // Actualizar imagen del jugador
         player.img.src = `${character}.png`;
     } else {
-        alert(`Necesitas ${characterUnlocks[character]} puntos para desbloquear este personaje`);
+        showCustomNotification(character); // Reemplazar el alert con la nueva notificación
     }
 }
 
