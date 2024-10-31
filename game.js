@@ -103,7 +103,7 @@ function selectCharacter(character) {
         // Actualizar imagen del jugador
         player.img.src = `${character}.png`;
     } else {
-        showCustomNotification(character); // Reemplazar el alert con la nueva notificación
+        alert(`Necesitas ${characterUnlocks[character]} puntos para desbloquear este personaje`);
     }
 }
 
@@ -573,7 +573,6 @@ function drawGame() {
 }
 
 function gameLoop() {
-    if (isPaused) return; 
     if (!gameRunning) return;
     movePlayer();
     updatePlatforms();
@@ -718,23 +717,3 @@ document.addEventListener('DOMContentLoaded', () => {
 document.body.addEventListener('touchmove', (e) => {
     e.preventDefault();
 }, { passive: false });
-
-// Variables para el estado del juego
-let isPaused = false;
-let gameInterval; // Asegúrate de usar esta variable en el bucle principal del juego
-
-// Función para pausar el juego
-function pauseGame() {
-    isPaused = true;
-    clearInterval(gameInterval); // Detiene el juego
-    document.getElementById("pauseMenu").classList.remove("hidden"); // Muestra el menú de pausa
-    document.getElementById("pauseButton").classList.add("hidden"); // Oculta el botón de pausa
-}
-
-// Función para reanudar el juego
-function resumeGame() {
-    isPaused = false;
-    document.getElementById("pauseMenu").classList.add("hidden"); // Oculta el menú de pausa
-    document.getElementById("pauseButton").classList.remove("hidden"); // Muestra el botón de pausa
-    gameInterval = setInterval(gameLoop, 20); // Reanuda el bucle del juego
-}
